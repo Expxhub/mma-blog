@@ -662,6 +662,7 @@ function AutomacaoSection() {
   const [saving, setSaving] = useState(false)
   const [running, setRunning] = useState(false)
   const [toast, setToast] = useState<{ type: 'success' | 'error'; msg: string } | null>(null)
+  const [imageWarning, setImageWarning] = useState<string | null>(null)
 
   useEffect(() => {
     fetch('/api/admin/automation')
@@ -720,11 +721,15 @@ function AutomacaoSection() {
   async function handleRunNow() {
     setRunning(true)
     setToast(null)
+    setImageWarning(null)
     try {
       const res = await fetch('/api/admin/automation/run', { method: 'POST' })
-      const data = await res.json() as { success?: boolean; skipped?: boolean; message?: string; error?: string; post_id?: number }
+      const data = await res.json() as { success?: boolean; skipped?: boolean; message?: string; error?: string; post_id?: number; image_error?: string }
       if (data.success) {
         setToast({ type: 'success', msg: data.message ?? 'Artigo gerado e publicado!' })
+        if (data.image_error) {
+          setImageWarning(`Imagem de capa não gerada: ${data.image_error}`)
+        }
         const updated = await fetch('/api/admin/automation').then((r) => r.json()) as { last_run_at?: string; next_run_at?: string }
         if (updated.last_run_at) setLastRunAt(updated.last_run_at)
         if (updated.next_run_at) setNextRunAt(updated.next_run_at)
@@ -760,12 +765,18 @@ function AutomacaoSection() {
       </p>
 
       {toast && (
-        <div className={`mb-5 px-4 py-3 rounded-lg text-sm ${
+        <div className={`mb-4 px-4 py-3 rounded-lg text-sm ${
           toast.type === 'success'
             ? 'bg-green-50 text-green-800 border border-green-200'
             : 'bg-red-50 text-red-800 border border-red-200'
         }`}>
           {toast.msg}
+        </div>
+      )}
+
+      {imageWarning && (
+        <div className="mb-5 px-4 py-3 rounded-lg text-sm bg-yellow-50 text-yellow-800 border border-yellow-200">
+          <span className="font-medium">Aviso:</span> {imageWarning}
         </div>
       )}
 

@@ -19,6 +19,7 @@ export type AutomationResult = {
   message: string
   post_id?: number
   skipped?: boolean
+  image_error?: string
 }
 
 export async function getOrCreateAutomationConfig() {
@@ -140,6 +141,7 @@ Responda com um JSON válido (sem markdown, sem \`\`\`) com a seguinte estrutura
 
   // Generate cover image (non-fatal if it fails)
   let coverImageUrl: string | undefined
+  let imageError: string | undefined
   try {
     const imagePromptTemplate = await getPromptFromDB('image')
     const contextParts = [`Título do artigo: ${articleData.title}`]
@@ -184,12 +186,15 @@ Responda com um JSON válido (sem markdown, sem \`\`\`) com a seguinte estrutura
       .from(STORAGE_BUCKET)
       .upload(filename, imageBuffer, { contentType })
 
-    if (!uploadError) {
-      const { data: { publicUrl } } = supabaseAdmin.storage.from(STORAGE_BUCKET).getPublicUrl(filename)
-      coverImageUrl = publicUrl
+    if (uploadError) {
+      throw new Error(`Erro ao fazer upload para o Supabase Storage: ${uploadError.message}`)
     }
+
+    const { data: { publicUrl } } = supabaseAdmin.storage.from(STORAGE_BUCKET).getPublicUrl(filename)
+    coverImageUrl = publicUrl
   } catch (imgErr) {
-    console.error('[Automation] Image generation failed (continuing without image):', imgErr)
+    imageError = imgErr instanceof Error ? imgErr.message : String(imgErr)
+    console.error('[Automation] Image generation failed (continuing without image):', imageError)
   }
 
   // Publish post
@@ -215,5 +220,6 @@ Responda com um JSON válido (sem markdown, sem \`\`\`) com a seguinte estrutura
     success: true,
     message: `Artigo "${articleData.title}" gerado e publicado com sucesso.`,
     post_id: post.id,
+    ...(imageError ? { image_error: imageError } : {}),
   }
 }
