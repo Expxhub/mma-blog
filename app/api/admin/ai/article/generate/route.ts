@@ -84,9 +84,11 @@ Responda com um JSON válido (sem markdown, sem \`\`\`) com a seguinte estrutura
         .replace(/```\n?/g, '')
         .trim()
       articleData = JSON.parse(cleaned)
-    } catch {
+    } catch (parseErr) {
+      console.error('[generate] JSON parse failed:', parseErr)
+      console.error('[generate] AI raw response (first 500):', result?.slice(0, 500))
       return NextResponse.json(
-        { error: 'Erro ao processar artigo gerado pela IA' },
+        { error: 'A IA não retornou JSON válido. Tente novamente ou use um modelo diferente em Configurações → IA.' },
         { status: 500 }
       )
     }
