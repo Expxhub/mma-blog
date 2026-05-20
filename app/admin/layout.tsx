@@ -8,6 +8,7 @@ const navItems = [
   { href: '/admin/artigos', label: 'Artigos', icon: '📝' },
   { href: '/admin/categorias', label: 'Categorias', icon: '🗂️' },
   { href: '/admin/tags', label: 'Tags', icon: '🏷️' },
+  { href: '/admin/aparencia', label: 'Aparência', icon: '🎨' },
 ]
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
