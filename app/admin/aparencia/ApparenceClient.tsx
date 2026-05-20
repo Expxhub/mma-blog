@@ -82,6 +82,52 @@ const TEMPLATE_OPTIONS = [
       </svg>
     ),
   },
+  {
+    id: 'business',
+    name: 'Business',
+    description: 'Estilo magazine corporativo com destaque, grid rico e newsletter',
+    preview: (
+      <svg viewBox="0 0 240 160" className="w-full" xmlns="http://www.w3.org/2000/svg">
+        {/* White header */}
+        <rect x="0" y="0" width="240" height="22" fill="white" rx="2" />
+        <rect x="0" y="21" width="240" height="1" fill="#e5e7eb" />
+        <rect x="8" y="7" width="48" height="8" fill="#1a1a2e" rx="2" />
+        <rect x="100" y="9" width="18" height="4" fill="#9ca3af" rx="1" />
+        <rect x="124" y="9" width="18" height="4" fill="#9ca3af" rx="1" />
+        <rect x="148" y="9" width="18" height="4" fill="#9ca3af" rx="1" />
+        <rect x="192" y="7" width="40" height="8" fill="#f3f4f6" rx="3" />
+        {/* Featured: large left */}
+        <rect x="0" y="26" width="144" height="72" fill="#d1d5db" rx="2" />
+        <rect x="0" y="74" width="144" height="24" fill="black" opacity="0.5" rx="2" />
+        <rect x="4" y="66" width="28" height="5" fill="#FF6B35" rx="1" />
+        <rect x="4" y="74" width="134" height="6" fill="white" rx="1" />
+        <rect x="4" y="83" width="90" height="4" fill="white" opacity="0.6" rx="1" />
+        {/* Featured: 2 small right */}
+        <rect x="148" y="26" width="92" height="33" fill="white" rx="2" />
+        <rect x="148" y="26" width="30" height="33" fill="#e5e7eb" rx="2" />
+        <rect x="182" y="31" width="54" height="5" fill="#d1d5db" rx="1" />
+        <rect x="182" y="40" width="40" height="4" fill="#e5e7eb" rx="1" />
+        <rect x="148" y="63" width="92" height="33" fill="white" rx="2" />
+        <rect x="148" y="63" width="30" height="33" fill="#e5e7eb" rx="2" />
+        <rect x="182" y="68" width="54" height="5" fill="#d1d5db" rx="1" />
+        <rect x="182" y="77" width="40" height="4" fill="#e5e7eb" rx="1" />
+        {/* 3-col grid */}
+        <rect x="0" y="102" width="73" height="42" fill="white" rx="2" />
+        <rect x="0" y="102" width="73" height="22" fill="#e5e7eb" rx="2" />
+        <rect x="2" y="128" width="50" height="4" fill="#d1d5db" rx="1" />
+        <rect x="83" y="102" width="73" height="42" fill="white" rx="2" />
+        <rect x="83" y="102" width="73" height="22" fill="#e5e7eb" rx="2" />
+        <rect x="85" y="128" width="50" height="4" fill="#d1d5db" rx="1" />
+        <rect x="166" y="102" width="74" height="42" fill="white" rx="2" />
+        <rect x="166" y="102" width="74" height="22" fill="#e5e7eb" rx="2" />
+        <rect x="168" y="128" width="50" height="4" fill="#d1d5db" rx="1" />
+        {/* Newsletter banner */}
+        <rect x="0" y="148" width="240" height="12" fill="#0D1B4B" rx="2" />
+        <rect x="70" y="151" width="50" height="4" fill="white" opacity="0.8" rx="1" />
+        <rect x="132" y="150" width="36" height="6" fill="#FF6B35" rx="3" />
+      </svg>
+    ),
+  },
 ]
 
 const COLOR_LABELS: { key: keyof ThemeColors; label: string }[] = [
@@ -94,6 +140,7 @@ const COLOR_LABELS: { key: keyof ThemeColors; label: string }[] = [
 const DEFAULT_COLORS: Record<string, ThemeColors> = {
   default: { primary: '#1A4FA0', secondary: '#F58A2D', background: '#F9FAFB', surface: '#FFFFFF' },
   portal: { primary: '#CC0000', secondary: '#FF6600', background: '#F5F5F5', surface: '#FFFFFF' },
+  business: { primary: '#0D1B4B', secondary: '#FF6B35', background: '#F7F8FA', surface: '#FFFFFF' },
 }
 
 export function ApparenceClient({ initial }: Props) {

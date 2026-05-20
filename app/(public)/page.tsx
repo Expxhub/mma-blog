@@ -6,10 +6,17 @@ import { HeroPost } from '@/components/blog/HeroPost'
 import { EditorialGrid } from '@/components/blog/EditorialGrid'
 import { Pagination } from '@/components/ui/Pagination'
 import { getSettings } from '@/lib/settings'
+import { FeaturedSection } from '@/components/blog/FeaturedSection'
+import { PostCardBusiness } from '@/components/blog/PostCardBusiness'
+import { NewsletterSection } from '@/components/blog/NewsletterSection'
 
-export const metadata: Metadata = {
-  title: 'Home',
-  description: 'Tecnologia, gestão e inovação para empresas — MMA Sistemas Blog',
+export async function generateMetadata(): Promise<Metadata> {
+  const { company } = await getSettings()
+  const blogName = company.blog_name || process.env.NEXT_PUBLIC_BLOG_NAME || 'Blog'
+  return {
+    title: 'Home',
+    description: `${company.blog_description || 'Tecnologia, gestão e inovação para empresas'} — ${blogName}`,
+  }
 }
 
 async function getPosts(searchParams: Record<string, string>) {
@@ -37,7 +44,7 @@ export default async function HomePage({
 }) {
   const { template } = await getSettings()
 
-  const pageLimit = template === 'portal' ? '10' : '9'
+  const pageLimit = template === 'portal' ? '10' : template === 'business' ? '12' : '9'
   const [postsData, categoriesData] = await Promise.all([
     getPosts({ page: searchParams.page ?? '1', limit: pageLimit, ...searchParams }),
     getCategories(),
@@ -49,6 +56,33 @@ export default async function HomePage({
       <div>
         {heroPost && <HeroPost post={heroPost} />}
         <EditorialGrid posts={gridPosts} />
+        <Suspense>
+          <Pagination currentPage={postsData.page} totalPages={postsData.pages} />
+        </Suspense>
+      </div>
+    )
+  }
+
+  if (template === 'business') {
+    const [p1, p2, p3, ...rest] = postsData.posts
+    const featuredPosts = [p1, p2, p3].filter(Boolean)
+    return (
+      <div>
+        <FeaturedSection posts={featuredPosts} />
+        {rest.length > 0 && (
+          <div className="mb-8">
+            <div className="flex items-center gap-3 mb-6">
+              <h2 className="text-lg font-bold text-neutral-900 whitespace-nowrap">Artigos Recentes</h2>
+              <div className="flex-1 h-px bg-gray-200" />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {rest.map((post: { id: number; title: string; slug: string; content: string; excerpt: string; cover_image: string | null; published_at: string | null; categories: { id: number; name: string; slug: string }[] }) => (
+                <PostCardBusiness key={post.id} post={post} variant="grid" />
+              ))}
+            </div>
+          </div>
+        )}
+        <NewsletterSection />
         <Suspense>
           <Pagination currentPage={postsData.page} totalPages={postsData.pages} />
         </Suspense>

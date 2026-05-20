@@ -124,6 +124,36 @@ export function ConfiguracoesClient({ initial }: Props) {
         ))}
       </div>
 
+      <section className="bg-white rounded-xl border border-gray-200 p-6">
+        <h2 className="text-lg font-semibold text-neutral-900 mb-3">API</h2>
+        <p className="text-sm text-gray-600 mb-4">
+          Gerencie tokens de acesso e acesse a documentação completa da API pública do blog.
+        </p>
+        <div className="flex gap-3">
+          <a
+            href="/admin/api"
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border border-brand-primary text-brand-primary hover:bg-brand-primary-light transition-colors"
+          >
+            <span>🔑</span> Gerenciar Tokens da API
+          </a>
+          <a
+            href="/docs"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            <span>📖</span> Documentação da API
+          </a>
+          <a
+            href="/api/v1/docs"
+            download="openapi.json"
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            <span>⬇️</span> Baixar OpenAPI JSON
+          </a>
+        </div>
+      </section>
+
       <div className="mt-8 flex justify-end">
         <Button onClick={handleSave} loading={saving}>
           Salvar alterações
