@@ -3,7 +3,6 @@ import { PortalHeader } from '@/components/layout/PortalHeader'
 import { BusinessHeader } from '@/components/layout/BusinessHeader'
 import { NewsHeader } from '@/components/layout/NewsHeader'
 import { Footer } from '@/components/layout/Footer'
-import { AnalyticsTracker } from '@/components/blog/AnalyticsTracker'
 import { getSettings } from '@/lib/settings'
 import type { Metadata } from 'next'
 
@@ -53,7 +52,6 @@ export default async function PublicLayout({ children }: { children: React.React
         socialTwitter={company.social_twitter}
         socialYoutube={company.social_youtube}
       />
-      <AnalyticsTracker />
     </div>
   )
 }

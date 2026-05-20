@@ -3,7 +3,6 @@ import { z } from 'zod'
 import { db } from '@/drizzle/db'
 import { siteSettings } from '@/drizzle/schema'
 import { getSettings } from '@/lib/settings'
-import { getDefaultModels } from '@/lib/ai'
 
 export const dynamic = 'force-dynamic'
 
@@ -37,31 +36,12 @@ const putSchema = z.object({
       social_youtube: z.string().max(200).optional(),
     })
     .optional(),
-  ai: z
-    .object({
-      api_key: z.string().max(200).optional(),
-      models: z.record(z.string(), z.string()).optional(),
-    })
-    .optional(),
 })
 
 export async function GET() {
   try {
     const settings = await getSettings()
-    const defaults = getDefaultModels()
-
-    let aiApiKey = ''
-    let aiModels: Record<string, string> = {}
-
-    try {
-      const rows = await db.select().from(siteSettings)
-      const map = Object.fromEntries(rows.map((r) => [r.key, r.value]))
-
-      aiApiKey = map['ai_api_key'] ?? ''
-      aiModels = map['ai_models'] ? { ...defaults, ...JSON.parse(map['ai_models']) } : { ...defaults }
-    } catch {}
-
-    return NextResponse.json({ ...settings, ai: { api_key: aiApiKey, models: aiModels } })
+    return NextResponse.json(settings)
   } catch {
     return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 })
   }
@@ -79,7 +59,7 @@ export async function PUT(request: Request) {
       )
     }
 
-    const { template, colors, company, ai } = parsed.data
+    const { template, colors, company } = parsed.data
     const now = new Date()
 
     if (template !== undefined) {
@@ -105,25 +85,6 @@ export async function PUT(request: Request) {
         .insert(siteSettings)
         .values({ key: 'company_info', value: companyJson, updated_at: now })
         .onConflictDoUpdate({ target: siteSettings.key, set: { value: companyJson, updated_at: now } })
-    }
-
-    if (ai !== undefined) {
-      if (ai.api_key !== undefined) {
-        await db
-          .insert(siteSettings)
-          .values({ key: 'ai_api_key', value: ai.api_key, updated_at: now })
-          .onConflictDoUpdate({ target: siteSettings.key, set: { value: ai.api_key, updated_at: now } })
-      }
-
-      if (ai.models !== undefined) {
-        const defaults = getDefaultModels()
-        const merged = { ...defaults, ...ai.models }
-        const modelsJson = JSON.stringify(merged)
-        await db
-          .insert(siteSettings)
-          .values({ key: 'ai_models', value: modelsJson, updated_at: now })
-          .onConflictDoUpdate({ target: siteSettings.key, set: { value: modelsJson, updated_at: now } })
-      }
     }
 
     const current = await getSettings()
