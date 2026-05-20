@@ -4,6 +4,7 @@ import {
   serial,
   integer,
   timestamp,
+  boolean,
   primaryKey,
   index,
 } from 'drizzle-orm/pg-core'
@@ -87,6 +88,62 @@ export const siteSettings = pgTable('site_settings', {
   updated_at: timestamp('updated_at').notNull().default(sql`now()`),
 })
 
+export const apiTokens = pgTable('api_tokens', {
+  id: serial('id').primaryKey(),
+  name: text('name').notNull(),
+  token: text('token').unique().notNull(),
+  active: text('active').notNull().default('true'),
+  last_used_at: timestamp('last_used_at'),
+  created_at: timestamp('created_at').notNull().default(sql`now()`),
+})
+
+export const articleThemes = pgTable(
+  'article_themes',
+  {
+    id: serial('id').primaryKey(),
+    title: text('title').notNull(),
+    description: text('description'),
+    source: text('source').notNull().default('manual'),
+    status: text('status').notNull().default('pending'),
+    created_at: timestamp('created_at').notNull().default(sql`now()`),
+  },
+  (t) => ({
+    statusIdx: index('article_themes_status_idx').on(t.status),
+  })
+)
+
+export const pageViews = pgTable(
+  'page_views',
+  {
+    id: serial('id').primaryKey(),
+    path: text('path').notNull(),
+    post_id: integer('post_id').references(() => posts.id, { onDelete: 'set null' }),
+    post_slug: text('post_slug'),
+    post_title: text('post_title'),
+    referrer: text('referrer'),
+    user_agent: text('user_agent'),
+    ip: text('ip'),
+    visited_at: timestamp('visited_at').notNull().default(sql`now()`),
+  },
+  (t) => ({
+    visitedAtIdx: index('page_views_visited_at_idx').on(t.visited_at),
+    postIdx: index('page_views_post_id_idx').on(t.post_id),
+    pathIdx: index('page_views_path_idx').on(t.path),
+  })
+)
+
+export const automationConfig = pgTable('automation_config', {
+  id: serial('id').primaryKey(),
+  enabled: boolean('enabled').notNull().default(false),
+  interval_hours: integer('interval_hours').notNull().default(24),
+  theme_ids: text('theme_ids').notNull().default('[]'),
+  custom_prompt: text('custom_prompt'),
+  last_run_at: timestamp('last_run_at'),
+  next_run_at: timestamp('next_run_at'),
+  created_at: timestamp('created_at').notNull().default(sql`now()`),
+  updated_at: timestamp('updated_at').notNull().default(sql`now()`),
+})
+
 export const postsRelations = relations(posts, ({ many }) => ({
   postCategories: many(postCategories),
   postTags: many(postTags),
@@ -121,4 +178,10 @@ export type Category = typeof categories.$inferSelect
 export type NewCategory = typeof categories.$inferInsert
 export type Tag = typeof tags.$inferSelect
 export type NewTag = typeof tags.$inferInsert
+export type ArticleTheme = typeof articleThemes.$inferSelect
+export type NewArticleTheme = typeof articleThemes.$inferInsert
 export type SiteSetting = typeof siteSettings.$inferSelect
+export type PageView = typeof pageViews.$inferSelect
+export type NewPageView = typeof pageViews.$inferInsert
+export type AutomationConfig = typeof automationConfig.$inferSelect
+export type NewAutomationConfig = typeof automationConfig.$inferInsert
