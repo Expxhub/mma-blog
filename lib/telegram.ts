@@ -3,8 +3,9 @@ import sanitizeHtml from 'sanitize-html'
 import { db } from '@/drizzle/db'
 import { siteSettings, posts } from '@/drizzle/schema'
 import { eq } from 'drizzle-orm'
-import { aiChat } from '@/lib/ai'
+import { aiChat, callOpenRouterImage, getPromptFromDB } from '@/lib/ai'
 import { generateSlug } from '@/lib/slug'
+import { supabaseAdmin, STORAGE_BUCKET } from '@/lib/supabase-admin'
 
 const sanitizeOptions: sanitizeHtml.IOptions = {
   allowedTags: sanitizeHtml.defaults.allowedTags.concat(['h2', 'h3', 'img']),
@@ -164,6 +165,64 @@ JSON válido (sem markdown):
       updated_at: now,
     })
     .returning()
+
+  // Generate cover image (non-fatal if it fails)
+  let coverImageUrl: string | undefined
+  try {
+    const imagePromptTemplate = await getPromptFromDB('image')
+    const contextParts = [`Título do artigo: ${articleData.title}`]
+    if (articleData.excerpt) contextParts.push(`Resumo: ${articleData.excerpt}`)
+    const textContent = cleanContent.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 2000)
+    contextParts.push(`Conteúdo: ${textContent}`)
+
+    let finalPrompt: string
+    if (imagePromptTemplate) {
+      finalPrompt = await aiChat('image_description', [
+        { role: 'system', content: 'Gere um prompt em inglês para criar uma imagem de capa profissional para o artigo. Responda APENAS com o prompt.' },
+        { role: 'user', content: `${imagePromptTemplate}\n\nContexto:\n${contextParts.join('\n')}` },
+      ], { temperature: 0.8, max_tokens: 500 })
+    } else {
+      finalPrompt = await aiChat('image_description', [
+        { role: 'system', content: 'Gere um prompt em inglês para criar uma imagem de capa para blog, estilo fotorealista ou editorial. Responda APENAS com o prompt.' },
+        { role: 'user', content: contextParts.join('\n') },
+      ], { temperature: 0.8, max_tokens: 500 })
+    }
+
+    const imageUrl = await callOpenRouterImage(finalPrompt)
+
+    let imageBuffer: Buffer
+    let contentType = 'image/png'
+
+    if (imageUrl.startsWith('data:')) {
+      const matches = imageUrl.match(/^data:(image\/\w+);base64,(.+)$/)
+      if (!matches) throw new Error('Formato de imagem inválido')
+      contentType = matches[1]
+      imageBuffer = Buffer.from(matches[2], 'base64')
+    } else {
+      const imageRes = await fetch(imageUrl)
+      contentType = imageRes.headers.get('content-type') ?? 'image/png'
+      imageBuffer = Buffer.from(await imageRes.arrayBuffer())
+    }
+
+    const ext = contentType.includes('jpeg') || contentType.includes('jpg') ? '.jpg'
+      : contentType.includes('webp') ? '.webp' : '.png'
+    const filename = `telegram-${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`
+
+    const { error: uploadError } = await supabaseAdmin.storage
+      .from(STORAGE_BUCKET)
+      .upload(filename, imageBuffer, { contentType })
+
+    if (!uploadError) {
+      const { data: { publicUrl } } = supabaseAdmin.storage.from(STORAGE_BUCKET).getPublicUrl(filename)
+      coverImageUrl = publicUrl
+    }
+  } catch (imgErr) {
+    console.error('[Telegram] Image generation failed (continuing without image):', imgErr)
+  }
+
+  if (coverImageUrl) {
+    await db.update(posts).set({ cover_image: coverImageUrl, updated_at: new Date() }).where(eq(posts.id, post.id))
+  }
 
   return { post_id: post.id, title: articleData.title, slug: post.slug }
 }
